@@ -2,6 +2,7 @@ package org.craftedsw.tripservicekata.trip;
 
 import org.craftedsw.tripservicekata.exception.UserNotLoggedInException;
 import org.craftedsw.tripservicekata.user.User;
+import org.junit.Before;
 import org.junit.Test;
 
 import java.util.List;
@@ -9,7 +10,9 @@ import java.util.List;
 import static com.googlecode.catchexception.CatchException.catchException;
 import static com.googlecode.catchexception.CatchException.caughtException;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.craftedsw.tripservicekata.trip.UserBuilder.*;
+import static org.craftedsw.tripservicekata.trip.UserBuilder.aUser;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 public class TripServiceTest {
 
@@ -18,8 +21,15 @@ public class TripServiceTest {
     private static final User REGISTERED_USER = new User();
     private static final User UNUSED_USER = new User();
 
-    private final TripService tripService = new TestableTripService();
+    private final TripDAO tripDAOMock = mock(TripDAO.class);
+    private TripService realTripService;
+
     private User loggedInUser = REGISTERED_USER;
+
+    @Before
+    public void setUp() {
+        realTripService = new TripService(tripDAOMock);
+    }
 
     @Test
     public void should_throw_exception_when_no_logged_in_user() {
@@ -29,7 +39,7 @@ public class TripServiceTest {
         loggedInUser = GUEST;
 
         // Act
-        catchException(tripService).getTripsByUser(unusedUser, loggedInUser);
+        catchException(realTripService).getTripsByUser(unusedUser, loggedInUser);
 
         // Assert
         assertThat(caughtException()).isInstanceOf(UserNotLoggedInException.class);
@@ -45,7 +55,7 @@ public class TripServiceTest {
                 .build();
 
         // Act
-        final List<Trip> friendTrips = tripService.getTripsByUser(friend, loggedInUser);
+        final List<Trip> friendTrips = realTripService.getTripsByUser(friend, loggedInUser);
 
         // Assert
         assertThat(friendTrips).isEmpty();
@@ -60,22 +70,15 @@ public class TripServiceTest {
                 .withTrips(TO_BRAZIL)
                 .build();
 
+        when(tripDAOMock.tripsOf(friend)).thenReturn(friend.trips());
+
         // Act
-        final List<Trip> friendTrips = tripService.getTripsByUser(friend, loggedInUser);
+        final List<Trip> friendTrips = realTripService.getTripsByUser(friend, loggedInUser);
 
         // Assert
         assertThat(friendTrips)
                 .hasSize(1)
                 .contains(TO_BRAZIL);
-    }
-
-    private class TestableTripService extends TripService {
-
-        @Override
-        protected List<Trip> tripsByUser(User user) {
-            return user.trips();
-        }
-
     }
 
 }

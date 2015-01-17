@@ -29,7 +29,7 @@ public class TripServiceTest {
         loggedInUser = GUEST;
 
         // Act
-        catchException(tripService).getTripsByUser(unusedUser);
+        catchException(tripService).getTripsByUser(unusedUser, loggedInUser);
 
         // Assert
         assertThat(caughtException()).isInstanceOf(UserNotLoggedInException.class);
@@ -45,7 +45,7 @@ public class TripServiceTest {
                 .build();
 
         // Act
-        final List<Trip> friendTrips = tripService.getTripsByUser(friend);
+        final List<Trip> friendTrips = tripService.getTripsByUser(friend, loggedInUser);
 
         // Assert
         assertThat(friendTrips).isEmpty();
@@ -61,7 +61,7 @@ public class TripServiceTest {
                 .build();
 
         // Act
-        final List<Trip> friendTrips = tripService.getTripsByUser(friend);
+        final List<Trip> friendTrips = tripService.getTripsByUser(friend, loggedInUser);
 
         // Assert
         assertThat(friendTrips)
@@ -76,10 +76,6 @@ public class TripServiceTest {
             return user.trips();
         }
 
-        @Override
-        protected User getLoggedUser() {
-            return loggedInUser;
-        }
     }
 
 }
